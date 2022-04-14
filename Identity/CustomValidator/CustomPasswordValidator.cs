@@ -13,7 +13,10 @@ namespace Identity.CustomValidator
 
             if (password.ToLower().Contains(user.UserName.ToLower()))
             {
-                errors.Add(new IdentityError() { Code = "PasswordContainsUserName", Description = "Password doesn't contain user name" });
+                if (!user.Email.Contains(user.UserName.ToLower()))
+                {
+                    errors.Add(new IdentityError() { Code = "PasswordContainsUserName", Description = "Password doesn't contain user name" });
+                }
             }
 
             if (password.ToLower().Contains("123456789"))
