@@ -2,6 +2,7 @@ using Identity.CustomValidator;
 using Identity.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +25,11 @@ namespace Identity
             {
                 opts.UseSqlServer(configuration["ConnectionStrings:DefaultConnection"]);
             });
+            CookieBuilder cookieBuilder = new CookieBuilder();
+            cookieBuilder.Name = "MyBlog";
+            cookieBuilder.HttpOnly = false;
+            cookieBuilder.Expiration = System.TimeSpan.FromDays(60);
+
             services.AddIdentity<AppUser, AppRole>(opts =>
             {
                 //User Name validation
@@ -38,6 +44,7 @@ namespace Identity
                 opts.Password.RequireDigit = false;
             }).AddPasswordValidator<CustomPasswordValidator>()
             .AddUserValidator<CustomUserValidator>()
+            .AddErrorDescriber<CustomIdentityErrorDescriber>()
             .AddEntityFrameworkStores<AppIdentityDbContext>();
 
             services.AddMvc(option => option.EnableEndpointRouting = false);
