@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 
 namespace Identity
 {
@@ -26,24 +25,7 @@ namespace Identity
                 opts.UseSqlServer(configuration["ConnectionStrings:DefaultConnection"]);
             });
 
-            CookieBuilder cookieBuilder = new CookieBuilder();
-
-            cookieBuilder.Name = "Usman.KG";
-            cookieBuilder.HttpOnly = false;
-            cookieBuilder.SameSite = SameSiteMode.Lax;
-            cookieBuilder.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-
-            services.ConfigureApplicationCookie(opts =>
-            {
-                opts.LoginPath = new PathString("/Home/SignIn");
-                opts.Cookie = cookieBuilder;
-                opts.SlidingExpiration = true;
-                opts.ExpireTimeSpan = System.TimeSpan.FromDays(60);
-                //opts.LogoutPath = new PathString("/Home/LogOut");
-            });
-
             services.AddRazorPages().AddRazorRuntimeCompilation();
-
 
             services.AddIdentity<AppUser, AppRole>(opts =>
             {
@@ -63,6 +45,22 @@ namespace Identity
             .AddEntityFrameworkStores<AppIdentityDbContext>();
 
             services.AddMvc(option => option.EnableEndpointRouting = false);
+
+            //Cookie
+            CookieBuilder cookieBuilder = new CookieBuilder();
+            cookieBuilder.Name = "Usman.KG";
+            cookieBuilder.HttpOnly = false;
+            cookieBuilder.SameSite = SameSiteMode.Lax;
+            cookieBuilder.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+
+            services.ConfigureApplicationCookie(opts =>
+            {
+                opts.LoginPath = new PathString("/Home/SignIn");
+                opts.Cookie = cookieBuilder;
+                opts.SlidingExpiration = true;
+                opts.ExpireTimeSpan = System.TimeSpan.FromDays(60);
+                //opts.LogoutPath = new PathString("/Home/LogOut");
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -71,8 +69,8 @@ namespace Identity
             app.UseDeveloperExceptionPage();
             app.UseStatusCodePages();
             app.UseStaticFiles();
-            app.UseMvcWithDefaultRoute();//Controller/Action/{id}
             app.UseAuthentication();
+            app.UseMvcWithDefaultRoute();//Controller/Action/{id}
         }
     }
 }

@@ -23,8 +23,9 @@ namespace Identity.Controllers
         }
 
         [HttpGet]
-        public IActionResult SignIn()
+        public IActionResult SignIn(string returnUrl)
         {
+            TempData["returnUrl"] = returnUrl;
             return View();
         }
 
@@ -38,18 +39,22 @@ namespace Identity.Controllers
                 if (user != null)
                 {
                     await _signInManager.SignOutAsync();
-                    Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user, signIn.Password, false, false);
+                    Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user, signIn.Password, signIn.RememberMe, false);
                     if (result.Succeeded)
                     {
+                        if (TempData["returnUrl"] != null)
+                        {
+                            return Redirect(TempData["returnUrl"].ToString());
+                        }
                         return RedirectToAction("Index", "Member");
                     }
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Туура эмес э-почта же сыр соз");
+                    else
+                    {
+                        ModelState.AddModelError("", "Туура эмес э-почта же сыр соз");
+                    }
                 }
             }
-            return View();
+            return View(signIn);
         }
 
         [HttpGet]

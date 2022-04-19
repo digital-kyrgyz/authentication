@@ -14,5 +14,6 @@ namespace Identity.ViewModels
         [DataType(DataType.Password)]
         [MinLength(8, ErrorMessage = "Сыр соз эн аз 8 символ болушу шарт")]
         public string Password { get; set; }
+        public bool RememberMe { get; set; }
     }
 }
