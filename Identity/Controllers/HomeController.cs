@@ -9,10 +9,12 @@ namespace Identity.Controllers
     public class HomeController : Controller
     {
         private UserManager<AppUser> _userManager { get; }
+        private SignInManager<AppUser> _signInManager { get; }
 
-        public HomeController(UserManager<AppUser> userManager)
+        public HomeController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
         {
             _userManager = userManager;
+            _signInManager = signInManager;
         }
 
         public IActionResult Index()
@@ -23,6 +25,30 @@ namespace Identity.Controllers
         [HttpGet]
         public IActionResult SignIn()
         {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SignIn(SignInVm signIn)
+        {
+            if (ModelState.IsValid)
+            {
+                AppUser user = await _userManager.FindByEmailAsync(signIn.Email);
+
+                if (user != null)
+                {
+                    await _signInManager.SignOutAsync();
+                    Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user, signIn.Password, false, false);
+                    if (result.Succeeded)
+                    {
+                        return RedirectToAction("Index", "Member");
+                    }
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Туура эмес э-почта же сыр соз");
+                }
+            }
             return View();
         }
 

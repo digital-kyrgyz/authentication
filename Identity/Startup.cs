@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System;
 
 namespace Identity
 {
@@ -20,15 +21,29 @@ namespace Identity
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddRazorPages().AddRazorRuntimeCompilation();
             services.AddDbContext<AppIdentityDbContext>(opts =>
             {
                 opts.UseSqlServer(configuration["ConnectionStrings:DefaultConnection"]);
             });
+
             CookieBuilder cookieBuilder = new CookieBuilder();
-            cookieBuilder.Name = "MyBlog";
+
+            cookieBuilder.Name = "Usman.KG";
             cookieBuilder.HttpOnly = false;
-            cookieBuilder.Expiration = System.TimeSpan.FromDays(60);
+            cookieBuilder.SameSite = SameSiteMode.Lax;
+            cookieBuilder.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+
+            services.ConfigureApplicationCookie(opts =>
+            {
+                opts.LoginPath = new PathString("/Home/SignIn");
+                opts.Cookie = cookieBuilder;
+                opts.SlidingExpiration = true;
+                opts.ExpireTimeSpan = System.TimeSpan.FromDays(60);
+                //opts.LogoutPath = new PathString("/Home/LogOut");
+            });
+
+            services.AddRazorPages().AddRazorRuntimeCompilation();
+
 
             services.AddIdentity<AppUser, AppRole>(opts =>
             {
@@ -37,7 +52,7 @@ namespace Identity
                 opts.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._";
 
                 //Pasword validation
-                opts.Password.RequiredLength = 4;
+                opts.Password.RequiredLength = 8;
                 opts.Password.RequireNonAlphanumeric = false;
                 opts.Password.RequireLowercase = false;
                 opts.Password.RequireUppercase = false;

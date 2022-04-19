@@ -37,20 +37,20 @@
                         @if (User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item pl-1">
-                                <a class="nav-link" asp-action="SignIn" asp-controller="Home"><i class="fa fa-sign-in fa-fw mr-1"></i>Sign In</a>
+                                <a class="nav-link" asp-action="SignOut" asp-controller="Home"><i class="fa fa-sign-out fa-fw mr-1"></i>Sign Out</a>
                             </li>
                         }
                         else
                         {
                             <li class="nav-item pl-1">
-                                <a class="nav-link" asp-action="SignUp" asp-controller="Home"><i class="fa fa-user-plus fa-fw mr-1"></i>Sign Up</a>
+                                <a class="nav-link" asp-action="SignIn" asp-controller="Home"><i class="fa fa-user-plus fa-fw mr-1"></i>Sign In</a>
                             </li>
                         }
                     </ul>
                 </div>
             </div>
         </nav>
-        <!--# Navbar #-->
+        <!-- Navbar -->
     </header>
 
     <div class="container" style="min-height:560px;">
@@ -65,12 +65,11 @@
                     <div class="col-12 col-sm-12 col-md-12 col-lg-4 col-xl-4 cizgi">
                         <div class="card bg-secondary border-0">
                             <div class="card-body text-light text-center">
-                                <h5 class="card-title text-white display-4" style="font-size:30px">Telif Hakkı</h5>
+                                <h5 class="card-title text-white display-4" style="font-size:30px">Укуктар</h5>
                                 <p class="d-inline lead">
-                                    Tüm Hakları Saklıdır © 2018<br>
+                                    Бардык укуктар корголгон © @DateTime.Now.Date.ToString("yyyy")<br>
                                     <a href="#" class="text-light d-block lead">Blog</a>
                                 </p>
-
                             </div>
                         </div>
                     </div>
@@ -78,7 +77,7 @@
                     <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-4 cizgi">
                         <div class="card bg-secondary border-0">
                             <div class="card-body text-center">
-                                <h5 class="card-title text-white display-4" style="font-size:30px">İletişim</h5>
+                                <h5 class="card-title text-white display-4" style="font-size:30px">Байланышуу</h5>
                                 <a class="text-light d-block lead" style="margin-left: -20px" href="#"><i class="fa fa-phone mr-2"></i>+90 (000) 000 0 000</a>
                                 <a class="text-light d-block lead" href="#"><i class="fa fa-envelope mr-2"></i>admin@localhost.com</a>
                             </div>
@@ -88,7 +87,7 @@
                     <div class="col-12 col-sm-12 col-md-6 col-lg-4 col-xl-4">
                         <div class="card bg-secondary border-0">
                             <div class="card-body text-center">
-                                <h5 class="card-title text-white display-4" style="font-size:30px">Sosyal Medya</h5>
+                                <h5 class="card-title text-white display-4" style="font-size:30px">Социальдык Медия</h5>
 
                                 <a class="text-light" href="#"><i class="fa fa-facebook-square fa-fw fa-2x"></i></a>
 
@@ -105,6 +104,6 @@
             </div>
         </div>
     </footer>
-    <!--# Footer #-->
+    <!-- Footer -->
 </body>
 </html>
