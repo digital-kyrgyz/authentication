@@ -2,6 +2,7 @@
 using Identity.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace Identity.Controllers
@@ -38,10 +39,18 @@ namespace Identity.Controllers
 
                 if (user != null)
                 {
+                    if (await _userManager.IsLockedOutAsync(user))
+                    {
+                        ModelState.AddModelError("", "Аккаунттунуз белгилуу убакытка блоктолгон. Сураныч бир аздан кийин кайта кирип корунуз.");
+                        return View(signIn);
+                    };
+
                     await _signInManager.SignOutAsync();
                     Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user, signIn.Password, signIn.RememberMe, false);
                     if (result.Succeeded)
                     {
+                        await _userManager.ResetAccessFailedCountAsync(user);
+
                         if (TempData["returnUrl"] != null)
                         {
                             return Redirect(TempData["returnUrl"].ToString());
@@ -50,8 +59,24 @@ namespace Identity.Controllers
                     }
                     else
                     {
-                        ModelState.AddModelError("", "Туура эмес э-почта же сыр соз");
+                        await _userManager.AccessFailedAsync(user);
+
+                        int fail = await _userManager.GetAccessFailedCountAsync(user);
+                        ModelState.AddModelError("", $"{fail} жолу ийгиликсиз кируу");
+                        if (fail == 3)
+                        {
+                            await _userManager.SetLockoutEndDateAsync(user, new DateTimeOffset(DateTime.Now.AddMinutes(20)));
+                            ModelState.AddModelError("", "Аккаунттунуз 20 минутка блоктолду");
+                        }
+                        else
+                        {
+                            ModelState.AddModelError("", "Туура эмес э-почта же сыр соз");
+                        }
                     }
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Бул э-почта табылганы жок");
                 }
             }
             return View(signIn);
@@ -87,6 +112,13 @@ namespace Identity.Controllers
                 }
             }
             return View(userVm);
+        }
+
+        [HttpGet]
+        public new async Task<IActionResult> SignOut()
+        {
+            await _signInManager.SignOutAsync();
+            return RedirectToAction(nameof(HomeController.Index), "Home");
         }
     }
 }
