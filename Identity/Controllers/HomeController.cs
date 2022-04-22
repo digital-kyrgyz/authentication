@@ -41,7 +41,7 @@ namespace Identity.Controllers
                 {
                     if (await _userManager.IsLockedOutAsync(user))
                     {
-                        ModelState.AddModelError("", "Аккаунттунуз белгилуу убакытка блоктолгон. Сураныч бир аздан кийин кайта кирип корунуз.");
+                        ModelState.AddModelError("", "Аккаунттунуз белгилуу убакытка блоктолгон. Сураныч бир аздан кийин кайра кириниз.");
                         return View(signIn);
                     };
 
@@ -119,6 +119,35 @@ namespace Identity.Controllers
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction(nameof(HomeController.Index), "Home");
+        }
+
+        [HttpGet]
+        public IActionResult ResetPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult ResetPassword(ResetPasswordVm passwordVm)
+        {
+            var user = _userManager.FindByEmailAsync(passwordVm.Email).Result;
+            if (user != null)
+            {
+                string passwordResetToken = _userManager.GeneratePasswordResetTokenAsync(user).Result;
+                string passwordResetLink = Url.Action("ResetPasswordConfirm", "Home", new
+                {
+                    userId = user.Id,
+                    token = passwordResetToken,
+                }, HttpContext.Request.Scheme);
+                //www.usman.kg/home/resetpasswordconfirm?userid=lskdjf=sldkfdlsf
+                Helper.PasswordReset.PasswordResetSendEmail(passwordResetLink);
+                ViewBag.Status = "succesfull";
+            }
+            else
+            {
+                ModelState.AddModelError("", "Системада мындай колдонуучу жок");
+            }
+            return View(passwordVm);
         }
     }
 }
