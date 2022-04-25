@@ -141,11 +141,55 @@ namespace Identity.Controllers
                 }, HttpContext.Request.Scheme);
                 //www.usman.kg/home/resetpasswordconfirm?userid=lskdjf=sldkfdlsf
                 Helper.PasswordReset.PasswordResetSendEmail(passwordResetLink);
-                ViewBag.Status = "succesfull";
+                ViewBag.Status = "succes";
             }
             else
             {
                 ModelState.AddModelError("", "Системада мындай колдонуучу жок");
+            }
+            return View(passwordVm);
+        }
+
+        [HttpGet]
+        public IActionResult ResetPasswordConfirm(string userId, string token)
+        {
+            TempData["userId"] = userId;
+            TempData["token"] = token;
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetPasswordConfirm([Bind("NewPassword")] ResetPasswordVm passwordVm)
+        {
+            if (TempData["token"] != null)
+            {
+                string token = TempData["token"].ToString();
+                string userId = TempData["userId"].ToString();
+                AppUser user = await _userManager.FindByIdAsync(userId);
+                if (user != null)
+                {
+                    IdentityResult result = await _userManager.ResetPasswordAsync(user, token, passwordVm.NewPassword);
+                    if (result.Succeeded)
+                    {
+                        await _userManager.UpdateSecurityStampAsync(user);
+                        ViewBag.Status = "success";
+                    }
+                    else
+                    {
+                        foreach (var item in result.Errors)
+                        {
+                            ModelState.AddModelError("", item.Description);
+                        }
+                    }
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Бир ката чыкты. Бир аздан кийин кайра кирип корунуз");
+                }
+            }
+            else
+            {
+                ModelState.AddModelError("", "Бул токен жараксыз");
             }
             return View(passwordVm);
         }
