@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Identity.Enums;
+using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Identity.ViewModels
 {
@@ -20,5 +22,11 @@ namespace Identity.ViewModels
         [Display(Name = "Password")]
         [DataType(DataType.Password)]
         public string Password { get; set; }
+
+        [DataType(DataType.Date)]
+        public DateTime? BirthDay { get; set; }
+        public string Picture { get; set; }
+        public string City { get; set; }
+        public Gender Gender { get; set; }
     }
 }

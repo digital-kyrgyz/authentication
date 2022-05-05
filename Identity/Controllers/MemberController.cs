@@ -5,6 +5,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Mapster;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
+using Identity.Enums;
+using Microsoft.AspNetCore.Http;
+using System.IO;
+
 namespace Identity.Controllers
 {
     [Authorize]
@@ -31,20 +37,34 @@ namespace Identity.Controllers
         {
             AppUser user = _userManager.FindByNameAsync(User.Identity.Name).Result;
             UserVm userVm = user.Adapt<UserVm>();
-
+            ViewBag.Gender = new SelectList(Enum.GetNames(typeof(Gender)));
             return View(userVm);
         }
 
         [HttpPost]
-        public async Task<IActionResult> UserEdit(UserVm userVm)
+        public async Task<IActionResult> UserEdit(UserVm userVm, IFormFile userPicture)
         {
             ModelState.Remove("Password");
+            ViewBag.Gender = new SelectList(Enum.GetNames(typeof(Gender)));
             if (ModelState.IsValid)
             {
                 AppUser user = await _userManager.FindByNameAsync(User.Identity.Name);
+                if (userPicture != null && userPicture.Length > 0)
+                {
+                    var fileName = Guid.NewGuid().ToString() + Path.GetExtension(userPicture.FileName);
+                    var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/UserPicture", fileName);
+                    using(var stream = new FileStream(path, FileMode.Create))
+                    {
+                        await userPicture.CopyToAsync(stream);
+                        user.Picture = "/UserPicture/" + fileName;
+                    }
+                }
                 user.UserName = userVm.UserName;
                 user.Email = userVm.Email;
                 user.PhoneNumber = userVm.PhoneNumber;
+                user.City = userVm.City;
+                user.Gender = (int)userVm.Gender;
+                user.BirthDay = userVm.BirthDay;
 
                IdentityResult result =  await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
