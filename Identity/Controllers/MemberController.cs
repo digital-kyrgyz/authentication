@@ -14,20 +14,18 @@ using System.IO;
 namespace Identity.Controllers
 {
     [Authorize]
-    public class MemberController : Controller
+    public class MemberController : BaseController
     {
-        private UserManager<AppUser> _userManager { get; }
-        private SignInManager<AppUser> _signInManager { get; }
-
-        public MemberController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager)
+        public MemberController(
+            UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager)
+            : base(userManager, signInManager)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
         }
 
         public IActionResult Index()
         {
-            AppUser user = _userManager.FindByNameAsync(User.Identity.Name).Result;
+            AppUser user = CurrentUser; 
             UserVm userVm = user.Adapt<UserVm>();
             return View(userVm);
         }
@@ -35,7 +33,7 @@ namespace Identity.Controllers
         [HttpGet]
         public IActionResult UserEdit()
         {
-            AppUser user = _userManager.FindByNameAsync(User.Identity.Name).Result;
+            AppUser user = CurrentUser;
             UserVm userVm = user.Adapt<UserVm>();
             ViewBag.Gender = new SelectList(Enum.GetNames(typeof(Gender)));
             return View(userVm);
@@ -48,12 +46,12 @@ namespace Identity.Controllers
             ViewBag.Gender = new SelectList(Enum.GetNames(typeof(Gender)));
             if (ModelState.IsValid)
             {
-                AppUser user = await _userManager.FindByNameAsync(User.Identity.Name);
+                AppUser user = CurrentUser;
                 if (userPicture != null && userPicture.Length > 0)
                 {
                     var fileName = Guid.NewGuid().ToString() + Path.GetExtension(userPicture.FileName);
                     var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/UserPicture", fileName);
-                    using(var stream = new FileStream(path, FileMode.Create))
+                    using (var stream = new FileStream(path, FileMode.Create))
                     {
                         await userPicture.CopyToAsync(stream);
                         user.Picture = "/UserPicture/" + fileName;
@@ -66,7 +64,7 @@ namespace Identity.Controllers
                 user.Gender = (int)userVm.Gender;
                 user.BirthDay = userVm.BirthDay;
 
-               IdentityResult result =  await _userManager.UpdateAsync(user);
+                IdentityResult result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
                     ViewBag.Success = "true";
@@ -76,10 +74,7 @@ namespace Identity.Controllers
                 }
                 else
                 {
-                    foreach(var item in result.Errors)
-                    {
-                        ModelState.AddModelError("", item.Description);
-                    }
+                    AddModelError(result);
                 }
             }
             return View(userVm);
@@ -96,30 +91,29 @@ namespace Identity.Controllers
         {
             if (ModelState.IsValid)
             {
-                AppUser user = _userManager.FindByNameAsync(User.Identity.Name).Result;
-                
-                    bool exist = _userManager.CheckPasswordAsync(user, passwordVm.PasswordOld).Result;
-                    if (exist)
-                    {
-                        IdentityResult result = _userManager.ChangePasswordAsync(user, passwordVm.PasswordOld, passwordVm.PasswordNew).Result;
-                        if (result.Succeeded)
-                        {
-                            _userManager.UpdateSecurityStampAsync(user);
-                            _signInManager.SignOutAsync();
-                            _signInManager.PasswordSignInAsync(user, passwordVm.PasswordNew, true, false);
+                AppUser user = CurrentUser;
 
-                            ViewBag.Success = "true";
-                        }
-                        else
-                        {
-                            foreach (var item in result.Errors)
-                                ModelState.AddModelError("", item.Description);
-                        }
+                bool isExist = _userManager.CheckPasswordAsync(user, passwordVm.PasswordOld).Result;
+                if (isExist)
+                {
+                    IdentityResult result = _userManager.ChangePasswordAsync(user, passwordVm.PasswordOld, passwordVm.PasswordNew).Result;
+                    if (result.Succeeded)
+                    {
+                        _userManager.UpdateSecurityStampAsync(user);
+                        _signInManager.SignOutAsync();
+                        _signInManager.PasswordSignInAsync(user, passwordVm.PasswordNew, true, false);
+
+                        ViewBag.Success = "true";
                     }
                     else
                     {
-                        ModelState.AddModelError("", "Эски сыр туура эмес");
+                        AddModelError(result);
                     }
+                }
+                else
+                {
+                    ModelState.AddModelError("", "Эски сыр туура эмес");
+                }
             }
             return View(passwordVm);
         }
