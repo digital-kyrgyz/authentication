@@ -25,11 +25,52 @@ namespace Identity.Controllers
             UserVm userVm = user.Adapt<UserVm>();
             return View(userVm);
         }
+
+        [HttpGet]
+        public IActionResult UserEdit()
+        {
+            AppUser user = _userManager.FindByNameAsync(User.Identity.Name).Result;
+            UserVm userVm = user.Adapt<UserVm>();
+
+            return View(userVm);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UserEdit(UserVm userVm)
+        {
+            ModelState.Remove("Password");
+            if (ModelState.IsValid)
+            {
+                AppUser user = await _userManager.FindByNameAsync(User.Identity.Name);
+                user.UserName = userVm.UserName;
+                user.Email = userVm.Email;
+                user.PhoneNumber = userVm.PhoneNumber;
+
+               IdentityResult result =  await _userManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    ViewBag.Success = "true";
+                    await _userManager.UpdateSecurityStampAsync(user);
+                    await _signInManager.SignOutAsync();
+                    await _signInManager.SignInAsync(user, true);
+                }
+                else
+                {
+                    foreach(var item in result.Errors)
+                    {
+                        ModelState.AddModelError("", item.Description);
+                    }
+                }
+            }
+            return View(userVm);
+        }
+
         [HttpGet]
         public IActionResult PasswordChange()
         {
             return View();
         }
+
         [HttpPost]
         public IActionResult PasswordChange(PasswordChangeVm passwordVm)
         {

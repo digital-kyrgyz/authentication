@@ -61,7 +61,7 @@ namespace Identity
                 opts.Cookie = cookieBuilder;
                 opts.SlidingExpiration = true;
                 opts.ExpireTimeSpan = System.TimeSpan.FromDays(60);
-                //opts.LogoutPath = new PathString("/Home/LogOut");
+                opts.LogoutPath = new PathString("/Home/SignOut");
             });
         }
 

@@ -20,6 +20,10 @@ namespace Identity.Controllers
 
         public IActionResult Index()
         {
+            if (User.Identity.IsAuthenticated)
+            {
+                return RedirectToAction("Index", "Member");
+            }
             return View();
         }
 
@@ -115,10 +119,9 @@ namespace Identity.Controllers
         }
 
         [HttpGet]
-        public new async Task<IActionResult> SignOut()
+        public void SignOut()
         {
-            await _signInManager.SignOutAsync();
-            return RedirectToAction(nameof(HomeController.Index), "Home");
+            _signInManager.SignOutAsync();            
         }
 
         [HttpGet]
