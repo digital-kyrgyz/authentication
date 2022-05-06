@@ -1,0 +1,21 @@
+﻿@model List<RoleAssignVm>
+@{
+    ViewData["Title"] = "RoleAssign";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<h2>Role Assign to "@ViewBag.UserName"</h2>
+<hr />
+<form asp-action="RoleAssign" asp-controller="Admin" method="post">
+    @for(int i =0; i<Model.Count; i++)
+    {
+        <div class="form-check">
+            <input asp-for="@Model[i].IsSelected" type="checkbox" class="form-check-input"/>
+            <label asp-for="@Model[i].Id" class="form-check-label">@Model[i].Name</label>
+            <input asp-for="@Model[i].Name" type="hidden"/>
+            <input asp-for="@Model[i].Id" type="hidden"/>
+        </div>
+    }
+    <br />
+    <input class="btn btn-success" type="submit" value="Рол атоо" />
+</form>

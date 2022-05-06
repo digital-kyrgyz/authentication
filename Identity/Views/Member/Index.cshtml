@@ -24,11 +24,29 @@
             </tr>
             <tr>
                 <td>Туулган кун</td>
-                <td>@Model.BirthDay</td>
+                <td>
+                    @if (!String.IsNullOrEmpty(Model.BirthDay?.ToShortDateString()))
+                    {
+                        @Model.BirthDay
+                    }
+                    else
+                    {
+                        <span>Белгисиз</span>
+                    }
+                </td>
             </tr>
             <tr>
                 <td>Шаар</td>
-                <td>@Model.City</td>
+                <td>
+                    @if (!String.IsNullOrEmpty(Model.City))
+                    {
+                        @Model.City
+                    }
+                    else
+                    {
+                        <span>Белгисиз</span>
+                    }
+                </td>
             </tr>
             <tr>
                 <td>Жыныс</td>

@@ -1,22 +1,176 @@
 ﻿using Identity.Models;
+using Identity.ViewModels;
+using Mapster;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Identity.Controllers
 {
-    public class AdminController : Controller
+    [Authorize(Roles = "Admin")]
+    public class AdminController : BaseController
     {
-        private UserManager<AppUser> _userManager { get; }
-
-        public AdminController(UserManager<AppUser> userManager)
+        public AdminController(
+          UserManager<AppUser> userManager,
+          RoleManager<AppRole> roleManager)
+          : base(userManager, null, roleManager)
         {
-            _userManager = userManager;
+
         }
 
         public IActionResult Index()
         {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult RoleCreate()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult RoleCreate(RoleVm roleVm)
+        {
+            if (ModelState.IsValid)
+            {
+                AppRole appRole = new AppRole();
+                appRole.Name = roleVm.Name;
+                IdentityResult result = _roleManager.CreateAsync(appRole).Result;
+                if (result.Succeeded)
+                {
+                    return RedirectToAction("Roles", "Admin");
+                }
+                else
+                {
+                    AddModelError(result);
+                }
+            }
+            return View(roleVm);
+        }
+
+        public IActionResult Roles()
+        {
+            return View(_roleManager.Roles.ToList());
+        }
+
+        public IActionResult Users()
+        {
             return View(_userManager.Users.ToList());
+        }
+
+        public IActionResult Delete(string id)
+        {
+            if (id != null)
+            {
+                AppRole role = _roleManager.FindByIdAsync(id).Result;
+                if (role != null)
+                {
+                    IdentityResult result = _roleManager.DeleteAsync(role).Result;
+                    if (result.Succeeded)
+                    {
+                        return RedirectToAction("Roles", "Admin");
+                    }
+                    else
+                    {
+                        ViewBag.Errors = "Бир ката чыкты";
+                    }
+                }
+            }
+            else
+            {
+                ViewBag.Errors = $"Базада мындай рол жок";
+            }
+            return RedirectToAction("Roles", "Admin");
+        }
+
+        [HttpGet]
+        public IActionResult Update(string id)
+        {
+            AppRole role = _roleManager.FindByIdAsync(id).Result;
+            if (role != null)
+            {
+                return View(role.Adapt<RoleVm>());
+            }
+
+            return RedirectToAction("Roles", "Admin");
+        }
+
+        [HttpPost]
+        public IActionResult Update(RoleVm roleVm)
+        {
+            AppRole role = _roleManager.FindByIdAsync(roleVm.Id).Result;
+            if (role != null)
+            {
+                role.Name = roleVm.Name;
+                IdentityResult result = _roleManager.UpdateAsync(role).Result;
+                if (result.Succeeded)
+                {
+                    return RedirectToAction("Roles", "Admin");
+                }
+                else
+                {
+                    AddModelError(result);
+                }
+            }
+            else
+            {
+                ModelState.AddModelError("", "Мындай рол жок");
+            }
+            return View(roleVm);
+        }
+
+        [HttpGet]
+        public IActionResult RoleAssign(string id)
+        {
+            TempData["userId"] = id;
+            AppUser user = _userManager.FindByIdAsync(id).Result;
+            ViewBag.UserName = user.UserName;
+            IQueryable<AppRole> roles = _roleManager.Roles;
+            List<string> userRoles = _userManager.GetRolesAsync(user).Result as List<string>;
+
+            List<RoleAssignVm> roleAssignments = new List<RoleAssignVm>();
+
+
+
+            foreach (var role in roles)
+            {
+                RoleAssignVm r = new RoleAssignVm();
+                r.Id = role.Id;
+                r.Name = role.Name;
+
+                if (userRoles.Contains(role.Name))
+                {
+                    r.IsSelected = true;
+                }
+                else
+                {
+                    r.IsSelected = false;
+                }
+                roleAssignments.Add(r);
+            }
+            return View(roleAssignments);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RoleAssign(List<RoleAssignVm> roleAssigns)
+        {
+            AppUser user = _userManager.FindByIdAsync(TempData["userId"].ToString()).Result;
+            foreach (var item in roleAssigns)
+            {
+                if (item.IsSelected)
+                {
+                    await _userManager.AddToRoleAsync(user, item.Name);
+                }
+                else
+                {
+                    await _userManager.RemoveFromRoleAsync(user, item.Name);
+                }
+            }
+            return RedirectToAction("Users", "Admin");
         }
     }
 }

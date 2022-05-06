@@ -1,0 +1,43 @@
+﻿@model List<AppRole>
+@{
+    ViewData["Title"] = "Roles";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+
+<h1>Roles</h1>
+<hr />
+@if (ViewBag.Errors != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.Errors.ToList()
+    </div>
+}
+<table class="table table-bordered table-striped mt-2">
+    <tr>
+        <td>Id</td>
+        <td>Role Name</td>
+        <td>Жок кылуу</td>
+        <td>Озгортуу</td>
+    </tr>
+    @if (Model.Count() == 0)
+    {
+        <tr>
+            <td colspan="3">Nothing not found</td>
+        </tr>
+    }
+    else
+    {
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.Name</td>
+                <td><a asp-action="Delete" asp-controller="Admin" asp-route-id="@item.Id" class="btn btn-danger">Жок кылуу</a></td>
+                <td><a asp-action="Update" asp-controller="Admin" asp-route-id="@item.Id" class="btn btn-info">Озгортуу</a></td>
+            </tr>
+        }
+    }
+</table>
+
+<a asp-action="RoleCreate" asp-controller="Admin" class="btn btn-primary">Role создавать кылуу</a>

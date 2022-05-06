@@ -1,15 +1,15 @@
-﻿using Identity.Models;
+﻿using Identity.Enums;
+using Identity.Models;
 using Identity.ViewModels;
+using Mapster;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using Mapster;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
-using Identity.Enums;
-using Microsoft.AspNetCore.Http;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace Identity.Controllers
 {
@@ -19,13 +19,13 @@ namespace Identity.Controllers
         public MemberController(
             UserManager<AppUser> userManager,
             SignInManager<AppUser> signInManager)
-            : base(userManager, signInManager)
+            : base(userManager, signInManager, null)
         {
         }
 
         public IActionResult Index()
         {
-            AppUser user = CurrentUser; 
+            AppUser user = CurrentUser;
             UserVm userVm = user.Adapt<UserVm>();
             return View(userVm);
         }
@@ -116,6 +116,24 @@ namespace Identity.Controllers
                 }
             }
             return View(passwordVm);
+        }
+
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
+        [Authorize(Roles = "Manager")]
+        public IActionResult Manager()
+        {
+            return View();
+        }
+
+        [Authorize(Roles = "Editor")]
+        public IActionResult Editor()
+        {
+            return View();
         }
     }
 }

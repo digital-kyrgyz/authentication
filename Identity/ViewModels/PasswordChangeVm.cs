@@ -7,7 +7,7 @@ namespace Identity.ViewModels
         [Display(Name = "Эски сыр созунуз")]
         [Required(ErrorMessage = "Эски сыр созду жазыныз")]
         [DataType(DataType.Password)]
-        [MinLength(8, ErrorMessage ="Сыр соз эн аз 8 символ болуусу шарт")]
+        [MinLength(8, ErrorMessage = "Сыр соз эн аз 8 символ болуусу шарт")]
         public string PasswordOld { get; set; }
         [Display(Name = "Жаны сыр созунуз")]
         [Required(ErrorMessage = "Жаны сыр созду жазыныз")]

@@ -13,7 +13,7 @@ namespace Identity.Controllers
         public HomeController(
             UserManager<AppUser> userManager,
             SignInManager<AppUser> signInManager)
-            :base(userManager, signInManager)
+            : base(userManager, signInManager, null)
         {
 
         }
@@ -117,7 +117,7 @@ namespace Identity.Controllers
         [HttpGet]
         public new void SignOut()
         {
-            _signInManager.SignOutAsync();            
+            _signInManager.SignOutAsync();
         }
 
         [HttpGet]
