@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.IO;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Identity.Controllers
@@ -119,8 +120,17 @@ namespace Identity.Controllers
         }
 
         [HttpGet]
-        public IActionResult AccessDenied()
+        public IActionResult AccessDenied(string ReturnUrl)
         {
+            if (ReturnUrl.Contains("Violance"))
+                ViewBag.Message = "Сиз каалаган бет 15 жашка толбогондор учун жабык";
+
+            else if (ReturnUrl.Contains("Bishkek"))
+                ViewBag.Message = "Бул бетке сиздин шаарыныз туура келбейт. Башка озунуздун шаарынызга кириниз";
+            else if (ReturnUrl.Contains("Exchange"))
+                ViewBag.Message = "30 кундук акысыз кируунуз акырына жетти";
+            else
+                ViewBag.Message = "Уруксат алуу учун админге кайрылыныз";
             return View();
         }
 
@@ -132,6 +142,40 @@ namespace Identity.Controllers
 
         [Authorize(Roles = "Editor")]
         public IActionResult Editor()
+        {
+            return View();
+        }
+
+        [Authorize(Policy = "BishkekPolicy")]
+        [HttpGet]
+        public IActionResult Bishkek()
+        {
+            return View();
+        }
+
+        [Authorize(Policy = "ViolencePolicy")]
+        [HttpGet]
+        public IActionResult Violance()
+        {
+            return View();
+        }
+
+        public async Task<IActionResult> ExchangeRedirect()
+        {
+            bool result = User.HasClaim(x => x.Type == "ExpireDateExchange");
+            if (!result)
+            {
+                Claim ExpireDateExchange = new Claim("ExpireDateExchange", DateTime.Now.AddDays(30).Date.ToShortDateString(), ClaimValueTypes.String, "Internal");
+                await _userManager.AddClaimAsync(CurrentUser, ExpireDateExchange);
+                await _signInManager.SignOutAsync();
+                await _signInManager.SignInAsync(CurrentUser, true);
+            }
+            return RedirectToAction("Exchange");
+        }
+
+        [Authorize(Policy = "ExchangePolicy")]
+        [HttpGet]
+        public IActionResult Exchange()
         {
             return View();
         }

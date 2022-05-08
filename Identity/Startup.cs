@@ -1,5 +1,9 @@
+using Identity.ClaimProviders;
 using Identity.CustomValidator;
+using Identity.Helper;
 using Identity.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -21,11 +25,27 @@ namespace Identity
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddTransient<IAuthorizationHandler, ExpireDateExchangeHandler>();
+
             services.AddDbContext<AppIdentityDbContext>(opts =>
             {
                 opts.UseSqlServer(configuration["ConnectionStrings:DefaultConnection"]);
             });
-
+            services.AddAuthorization(opts =>
+            {
+                opts.AddPolicy("BishkekPolicy", policy =>
+                {
+                    policy.RequireClaim("city", "Bishkek");
+                });
+                opts.AddPolicy("ViolencePolicy", policy =>
+                {
+                    policy.RequireClaim("violence");
+                });
+                opts.AddPolicy("ExchangePolicy", policy =>
+                {
+                    policy.AddRequirements(new ExpireDateExchangeRequirement());
+                });
+            });
             services.AddRazorPages().AddRazorRuntimeCompilation();
 
             services.AddIdentity<AppUser, AppRole>(opts =>
@@ -64,6 +84,8 @@ namespace Identity
                 opts.AccessDeniedPath = new PathString("/Member/AccessDenied");
                 opts.LogoutPath = new PathString("/Home/SignOut");
             });
+            services.AddScoped<IClaimsTransformation, ClaimProvider>();
+            services.AddMvc();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -26,6 +26,11 @@ namespace Identity.Controllers
             return View();
         }
 
+        public IActionResult Claims()
+        {
+            return View(User.Claims.ToList());
+        }
+
         [HttpGet]
         public IActionResult RoleCreate()
         {
