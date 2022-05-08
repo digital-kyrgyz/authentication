@@ -2,9 +2,9 @@
 
 namespace Identity.Helper
 {
-    public static class PasswordReset
+    public static class EmailConfirmation
     {
-        public static void PasswordResetSendEmail(string link, string email)
+        public static void EmailСonfirmSend(string link, string email)
         {
             MailMessage mail = new MailMessage();
 
@@ -13,9 +13,9 @@ namespace Identity.Helper
 
             mail.From = new MailAddress("mistermrx99@gmail.com");
             mail.To.Add(email);
-            mail.Subject = $"www.usman.kg: Сыр созду жанылоо";
-            mail.Body = "<h2>Сыр созду жанылоо учун томонку шилтемеге басыныныз</h2><hr/>";
-            mail.Body += $"<a href='{link}'>Сыр соз жанылоо</a>";
+            mail.Subject = $"www.usman.kg: Э-почтаны тастыктоо";
+            mail.Body = "<h2>Э-почтаны тастыктоо учун томонку шилтемеге басыныныз</h2><hr/>";
+            mail.Body += $"<a href='{link}'>Э-почтаны тастыктоо</a>";
             mail.IsBodyHtml = true;
 
             smtpClient.Port = 587;

@@ -3,6 +3,9 @@ using Identity.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace Identity.Controllers
@@ -47,6 +50,12 @@ namespace Identity.Controllers
                         ModelState.AddModelError("", "Аккаунттунуз белгилуу убакытка блоктолгон. Сураныч бир аздан кийин кайра кириниз.");
                         return View(signIn);
                     };
+
+                    if (_userManager.IsEmailConfirmedAsync(user).Result == false)
+                    {
+                        ModelState.AddModelError("", "Сиздин э-почтаныз тастыктала элек. Э-почтанызды караныз");
+                        return View(signIn);
+                    }
 
                     await _signInManager.SignOutAsync();
                     Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.PasswordSignInAsync(user, signIn.Password, signIn.RememberMe, false);
@@ -96,6 +105,11 @@ namespace Identity.Controllers
         {
             if (ModelState.IsValid)
             {
+                if(_userManager.Users.Any(u=>u.PhoneNumber == userVm.PhoneNumber))
+                {
+                    ModelState.AddModelError("", "Мындай номер симтемада бар");
+                    return View(userVm);
+                }
                 AppUser user = new AppUser();
                 user.UserName = userVm.UserName;
                 user.Email = userVm.Email;
@@ -104,6 +118,16 @@ namespace Identity.Controllers
                 IdentityResult result = await _userManager.CreateAsync(user, userVm.Password);
                 if (result.Succeeded)
                 {
+                    string confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    string link = Url.Action("ConfirmEmail", "Home", new
+                    {
+                        userId = user.Id,
+                        token = confirmationToken,
+
+                    }, protocol: HttpContext.Request.Scheme);
+
+                    Helper.EmailConfirmation.EmailСonfirmSend(link, user.Email);
+
                     return RedirectToAction("SignIn");
                 }
                 else
@@ -139,7 +163,7 @@ namespace Identity.Controllers
                     token = passwordResetToken,
                 }, HttpContext.Request.Scheme);
                 //www.usman.kg/home/resetpasswordconfirm?userid=lskdjf=sldkfdlsf
-                Helper.PasswordReset.PasswordResetSendEmail(passwordResetLink);
+                Helper.PasswordReset.PasswordResetSendEmail(passwordResetLink, user.Email);
                 ViewBag.Status = "succes";
             }
             else
@@ -188,6 +212,121 @@ namespace Identity.Controllers
                 ModelState.AddModelError("", "Бул токен жараксыз");
             }
             return View(passwordVm);
+        }
+
+        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            IdentityResult result = await _userManager.ConfirmEmailAsync(user, token);
+
+            if (result.Succeeded)
+                ViewBag.Status = "Э-почтаныз тастыкталды";
+
+            else
+                ViewBag.Status = "Бир ката чыкты кайра кирип корунуз";
+
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult FacebookSignIn(string ReturnUrl)
+        {
+            string redirectUrl = Url.Action("Response", new { redirectUrl = ReturnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties("Facebook", redirectUrl);
+            return new ChallengeResult("Facebook", properties);
+        }
+
+        [HttpGet]
+        public IActionResult GoogleSignIn(string ReturnUrl)
+        {
+            string redirectUrl = Url.Action("Response", new { redirectUrl = ReturnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties("Google", redirectUrl);
+            return new ChallengeResult("Google", properties);
+        }
+
+        [HttpGet]
+        public IActionResult MicrosoftSignIn(string ReturnUrl)
+        {
+            string redirectUrl = Url.Action("Response", new { redirectUrl = ReturnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties("Microsoft", redirectUrl);
+            return new ChallengeResult("Microsoft", properties);
+        }
+
+        [HttpGet]
+        public async new Task<IActionResult> Response(string ReturnUrl = "/")
+        {
+            ExternalLoginInfo info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info == null)
+            {
+
+                return RedirectToAction("SignIn", "Home");
+            }
+            else
+            {
+                Microsoft.AspNetCore.Identity.SignInResult result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, true);
+
+                if (result.Succeeded)
+                    return Redirect(ReturnUrl);
+
+                else
+                {
+                    AppUser user = new AppUser();
+                    user.Email = info.Principal.FindFirst(ClaimTypes.Email).Value;
+                    string externalUserId = info.Principal.FindFirst(ClaimTypes.NameIdentifier).Value;
+
+                    if (info.Principal.HasClaim(x => x.Type == ClaimTypes.Name))
+                    {
+                        string userName = info.Principal.FindFirst(ClaimTypes.Name).Value;
+                        userName = userName.Replace(' ', '-').ToLower() + externalUserId.Substring(0, 5).ToString();
+                        user.UserName = userName;
+                    }
+                    else
+                    {
+                        user.UserName = info.Principal.FindFirst(ClaimTypes.Email).Value;
+                    }
+
+                    AppUser userOld = await _userManager.FindByEmailAsync(user.Email);
+
+                    if (userOld == null)
+                    {
+                        IdentityResult createResult = await _userManager.CreateAsync(user);
+
+                        if (createResult.Succeeded)
+                        {
+                            IdentityResult loginResult = await _userManager.AddLoginAsync(user, info);
+
+                            if (loginResult.Succeeded)
+                            {
+                                //await _signInManager.SignInAsync(user, true);
+                                await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, true);
+                                return Redirect(ReturnUrl);
+                            }
+                            else
+                            {
+                                AddModelError(createResult);
+                            }
+                        }
+                        else
+                        {
+                            AddModelError(createResult);
+                        }
+                    }
+                    else
+                    {
+                        IdentityResult loginResult = await _userManager.AddLoginAsync(userOld, info);
+                        await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, true);
+                        return Redirect(ReturnUrl);
+                    }
+                }
+            }
+            List<string> errors = ModelState.Values.SelectMany(x => x.Errors).Select(y => y.ErrorMessage).ToList();
+            return View("Error", errors);
+        }
+
+        [HttpGet]
+        public IActionResult Error()
+        {
+            return View();
         }
     }
 }

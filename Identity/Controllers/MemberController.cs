@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
@@ -48,6 +49,16 @@ namespace Identity.Controllers
             if (ModelState.IsValid)
             {
                 AppUser user = CurrentUser;
+                string phone = _userManager.GetPhoneNumberAsync(user).Result;
+                if (phone != userVm.PhoneNumber)
+                {
+                    ModelState.AddModelError("", "Бул телефон колдонулуп жатат");
+                    if (_userManager.Users.Any(u => u.PhoneNumber == userVm.PhoneNumber))
+                    {
+                        return View(userVm);
+                    }
+                }
+
                 if (userPicture != null && userPicture.Length > 0)
                 {
                     var fileName = Guid.NewGuid().ToString() + Path.GetExtension(userPicture.FileName);

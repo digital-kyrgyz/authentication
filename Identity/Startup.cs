@@ -46,6 +46,21 @@ namespace Identity
                     policy.AddRequirements(new ExpireDateExchangeRequirement());
                 });
             });
+
+            services.AddAuthentication().AddFacebook(opts =>
+            {
+                opts.AppId = configuration["Facebook:AppId"];
+                opts.AppSecret = configuration["Facebook:AppSecret"];
+            }).AddGoogle(opts =>
+            {
+                opts.ClientId = configuration["Google:ClientId"];
+                opts.ClientSecret = configuration["Google:ClientSecret"];
+            }).AddMicrosoftAccount(opts =>
+            {
+                opts.ClientId = configuration["Microsoft:ClientId"];
+                opts.ClientSecret = configuration["Microsoft:ClientSecret"];
+            });
+
             services.AddRazorPages().AddRazorRuntimeCompilation();
 
             services.AddIdentity<AppUser, AppRole>(opts =>

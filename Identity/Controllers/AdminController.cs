@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Identity.Controllers
 {
-    [Authorize(Roles = "Admin")]
+   // [Authorize(Roles = "Admin")]
     public class AdminController : BaseController
     {
         public AdminController(

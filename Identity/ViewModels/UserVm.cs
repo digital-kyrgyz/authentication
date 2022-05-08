@@ -9,6 +9,7 @@ namespace Identity.ViewModels
         [Required(ErrorMessage = "User Name required")]
         [Display(Name = "User Name")]
         public string UserName { get; set; }
+        [RegularExpression(@"^(0(\d{3}) (\d{2}) (\d{2}) (\d{2}))$", ErrorMessage = "Телефон номери туура эмес форматта")]
 
         [Display(Name = "Phone Number")]
         public string PhoneNumber { get; set; }
