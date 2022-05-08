@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Identity.Controllers
 {
-   // [Authorize(Roles = "Admin")]
+    // [Authorize(Roles = "Admin")]
     public class AdminController : BaseController
     {
         public AdminController(
@@ -175,6 +175,27 @@ namespace Identity.Controllers
                     await _userManager.RemoveFromRoleAsync(user, item.Name);
                 }
             }
+            return RedirectToAction("Users", "Admin");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ResetUserPasswordByAdmin(string id)
+        {
+            AppUser user = await _userManager.FindByIdAsync(id);
+            ResetPasswordByAdminVm newPasswordVm = new ResetPasswordByAdminVm();
+            newPasswordVm.UserId = user.Id;
+            return View(newPasswordVm);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ResetUserPasswordByAdmin(ResetPasswordByAdminVm passwordVm)
+        {
+            AppUser user = await _userManager.FindByIdAsync(passwordVm.UserId);
+
+            string token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            await _userManager.ResetPasswordAsync(user, token, passwordVm.NewPassword);
+            //This security stamp very important field, ok!
+            await _userManager.UpdateSecurityStampAsync(user);
             return RedirectToAction("Users", "Admin");
         }
     }
